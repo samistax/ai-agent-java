@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS datastax_ai_agent.agent_conversations (
     messages          frozen<list<frozen<ai_chat_message>>>,
     PRIMARY KEY (session_id, message_timestamp)
   ) WITH CLUSTERING ORDER BY (message_timestamp DESC);
+
+CREATE TABLE IF NOT EXISTS datastax_ai_agent.vector_store (
+    id text PRIMARY KEY,
+    content text,
+    embedding vector<float,1536>
+);
+CREATE CUSTOM INDEX IF NOT EXISTS vector_store_embedding_idx
+    ON datastax_ai_agent.vector_store (embedding) USING 'StorageAttachedIndex';
