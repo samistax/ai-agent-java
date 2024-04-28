@@ -26,3 +26,15 @@ ALTER TABLE datastax_ai_agent.agent_conversations
     ADD (prompt_request text, assistant text, embedding vector<float,1536>);
 CREATE CUSTOM INDEX IF NOT EXISTS agent_conversations_embedding_idx
     ON datastax_ai_agent.agent_conversations (embedding) USING 'StorageAttachedIndex';
+
+CREATE TABLE IF NOT EXISTS datastax_ai_agent.network_traffic (
+    unit_id int,
+    dtime timestamp,
+    sk_tx_bytes bigint,
+    sk_rx_bytes bigint,
+    cust_wired_tx_bytes bigint,
+    cust_wired_rx_bytes bigint,
+    cust_wifi_tx_bytes bigint,
+    cust_wifi_rx_bytes bigint,
+    PRIMARY KEY (unit_id, dtime)
+);
