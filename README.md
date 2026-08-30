@@ -21,17 +21,31 @@ The prompt adds some text to tell the LLM about the history being added.
 
 The history is stored and received through Spring AI's `ChatMemory` interface.  Here we use the `MessageWindowChatMemory` implementation on top of the `CassandraChatMemoryRepository` from Spring AI.
 
-The `CassandraChatMemoryRepository` automatically creates a default schema for itself.  This can be configured to use a different and/or existing table if you so desire.
+The `CassandraChatMemoryRepository` can create its own schema, but not on AstraDB.  Its `CREATE TYPE` statement carries a per-request keyspace, and the driver only permits that on native protocol V5, while AstraDB caps at V4.  So `spring.ai.chat.memory.repository.cassandra.initialize-schema` is set to `false` in `application.properties` and you create the two schema objects yourself.
 
-The default schema looks like…
+ ⚠️ Create the schema before you run the project.  Open the AstraDB console, go to the `CQL Console`, and type the following.  The names are fixed by Spring AI and must match exactly.
 ```
-CREATE TABLE agent_conversations (
+CREATE TYPE IF NOT EXISTS datastax_ai_agent.ai_chat_message (
+    msg_timestamp timestamp,
+    msg_type      text,
+    msg_content   text
+);
+
+CREATE TABLE IF NOT EXISTS datastax_ai_agent.agent_conversations (
     session_id        text,
     message_timestamp timestamp,
-    messages          list<text>,
+    messages          frozen<list<frozen<ai_chat_message>>>,
     PRIMARY KEY (session_id, message_timestamp)
   ) WITH CLUSTERING ORDER BY (message_timestamp DESC);
 ```
+
+Running against a local Apache Cassandra instead of AstraDB?  Create the keyspace first, then the two objects above.
+```
+CREATE KEYSPACE IF NOT EXISTS datastax_ai_agent
+  WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+```
+
+The repository can be configured to use a different and/or existing table if you so desire.
 
  🔎 To see changes this step introduces use `git diff workshop-step-0..workshop-step-1`.
 
