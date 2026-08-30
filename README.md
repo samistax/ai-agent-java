@@ -1,70 +1,102 @@
 # Build your own Java RAG AI Agent
 
- ⬅ This is the next workshop step after the [requirements step](../workshop-intro-requirements).
+ ⬅ This is the next workshop step after the [step-0](../workshop-step-0).
 
 ## Code, moar code, MOAR CODE
 
- 🤩 The step introduces the initial basic concepts of an AI Agent
-- LLM requests, and 
-- Prompt Engineering
+ 🤩 The step introduces a further basic concept of an AI Agent
+- Short Term Memory
 
- 
+This is also know as Conversational Memory.
+
  ♻️ This step introduces the following technologies and techniques
-- Java 21
-- Maven build system
-- OpenAI
-- Spring-AI for GenAI and RAG framework,
-- Spring Boot for simple http server and IoC containerisation,
-- Vaadin for simple java-based web UI
-- Decorator and Delegation pattern to "chain" AI capabilities together.
+- Apache Cassandra and/or AstraDB for persistence
+- Spring AI's `.chat.memory.` packages
+- Spring Boot Autoconfigure's Cassandra package
 
+
+This step introduces a new Decorating AI Agent `AiAgentSession` that adds conversation history capabilities.
+
+The prompt adds some text to tell the LLM about the history being added.
+
+The history is stored and received through Spring AI's `ChatMemory` interface.  Here we use the `MessageWindowChatMemory` implementation on top of the `CassandraChatMemoryRepository` from Spring AI.
+
+The `CassandraChatMemoryRepository` can create its own schema, but not on AstraDB.  Its `CREATE TYPE` statement carries a per-request keyspace, and the driver only permits that on native protocol V5, while AstraDB caps at V4.  So `spring.ai.chat.memory.repository.cassandra.initialize-schema` is set to `false` in `application.properties` and you create the two schema objects yourself.
+
+ ⚠️ Create the schema before you run the project.  Open the AstraDB console, go to the `CQL Console`, and type the following.  The names are fixed by Spring AI and must match exactly.
+```
+CREATE TYPE IF NOT EXISTS datastax_ai_agent.ai_chat_message (
+    msg_timestamp timestamp,
+    msg_type      text,
+    msg_content   text
+);
+
+CREATE TABLE IF NOT EXISTS datastax_ai_agent.agent_conversations (
+    session_id        text,
+    message_timestamp timestamp,
+    messages          frozen<list<frozen<ai_chat_message>>>,
+    PRIMARY KEY (session_id, message_timestamp)
+  ) WITH CLUSTERING ORDER BY (message_timestamp DESC);
+```
+
+Running against a local Apache Cassandra instead of AstraDB?  Create the keyspace first, then the two objects above.
+```
+CREATE KEYSPACE IF NOT EXISTS datastax_ai_agent
+  WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+```
+
+The repository can be configured to use a different and/or existing table if you so desire.
+
+ 🔎 To see changes this step introduces use `git diff workshop-step-0..workshop-step-1`.
+
+## Manual schema setup
+
+Schema initialization is disabled by default. Run [schema/step-1.cql](schema/step-1.cql) in the CQL console before starting this step. Run each earlier step's script in order when starting from a fresh keyspace. The keyspace is `datastax_ai_agent`; create it in the Astra console, or use the local Cassandra keyspace statement from step 1. The `ALTER TABLE` scripts run once per database.
 
 ## Configure and Build
 
- 🐢 Configure the project like:
-```
-cp credentials.txt.sample credentials.txt
-
-open credentials.txt   # fill in your api keys; the file is gitignored so they are never committed
-
-source credentials.txt
-```
-
- ☕️ Build the project like:
-```
-./mvnw clean install
-```
 
  🏃🏿 Run the project like:
 ```
 ./mvnw clean spring-boot:run
 ```
 
- 🧙🏻‍♀️ If you need or want to debug the project, do:
-```
-./mvnw spring-boot:run -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
-```
+
+
+
 
 ## Ask some questions…
 
- 👩‍💻 Open in a browser http://localhost:8080
+ 👩‍💻 Once fixed and running, open in a browser http://localhost:8080
  and ask your chatbot some questions.
 
-It's pretty limited, the application remains stateless and has a static prompt.
+Test the agents ability to remember the conversation.  The conversation is bound to the Vaadin session, so it will work over different browser tabs and limited periods of time as well.
 
- 🔍 Explore where these limitations in its answers are.
+The Agent is still limited though.  While is keeps memory of its interactions with you, it's only pulling knowledge its model has been trained on.
 
- ℹ️ The prompt being sent to OpenAI is logged as `info` in your terminal.
+ 🔍 Explore and test where these limitations are.
+
+ 🔍 Explore the data that's been created in AstraDB.
+- Open the AstraDB console, go to the `CQL Console`
+- Type the command cql commands
+```
+USE datastax_ai_agent ;
+DESCRIBE agent_conversations ;
+SELECT * FROM agent_conversations ;
+```
+
 
 ## Tests
 
 Run `./mvnw verify` to compile, test, and package the application. Tests use local model substitutes and do not need provider credentials.
 
+The database tests require a Docker-compatible container runtime. They start Cassandra 5, apply the manual schema, and test native protocol V4 with schema initialization disabled. They check memory persistence and reject startup DDL. Vector steps also test insertion, search, and deletion.
+
 ## Next… 
 
- 💪🏽 To move on to [step-1](../workshop-step-1) do the following:
+ 💪🏽 To move on to [step-2](../workshop-step-2) do the following:
 ```
-git switch workshop-step-1
+git switch workshop-step-2
 ```
 
 
