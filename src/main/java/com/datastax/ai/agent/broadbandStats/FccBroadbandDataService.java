@@ -16,7 +16,8 @@
  */
 package com.datastax.ai.agent.broadbandStats;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.function.Function;
 
 import com.datastax.ai.agent.broadbandStats.FccBroadbandDataService.Request;
@@ -28,7 +29,8 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 
 final class FccBroadbandDataService implements Function<Request, Response> {
 
-    public record TimeRange(Instant from, Instant to) {}
+    // the LLM supplies timestamps without a time zone (e.g. 2026-07-01T00:00:00), interpreted as UTC
+    public record TimeRange(LocalDateTime from, LocalDateTime to) {}
 
     public record Request(int device_id, TimeRange range) {}
 
@@ -51,8 +53,8 @@ final class FccBroadbandDataService implements Function<Request, Response> {
         
         SimpleStatement stmt = QueryBuilder.selectFrom("datastax_ai_agent", "network_traffic").all()
                 .whereColumn("unit_id").isEqualTo(QueryBuilder.literal(t.device_id))
-                .whereColumn("dtime").isGreaterThanOrEqualTo(QueryBuilder.literal(t.range.from))
-                .whereColumn("dtime").isLessThanOrEqualTo(QueryBuilder.literal(t.range.to))
+                .whereColumn("dtime").isGreaterThanOrEqualTo(QueryBuilder.literal(t.range.from.toInstant(ZoneOffset.UTC)))
+                .whereColumn("dtime").isLessThanOrEqualTo(QueryBuilder.literal(t.range.to.toInstant(ZoneOffset.UTC)))
                 .build();
 
 

@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Description;
 public class FccBroadbandDataTool {
 
     @Bean
-    @Description("Get device data usage over a period of time")
+    @Description("Get device data usage over a period of time (ISO-8601 local date-time in UTC, without a zone suffix)")
     public Function<Request, Response> fccBroadbandDataService(CqlSession cqlSession) {
         return new FccBroadbandDataService(cqlSession);
     }
