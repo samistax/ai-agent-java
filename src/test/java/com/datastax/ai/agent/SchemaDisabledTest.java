@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(properties = {
+    "spring.config.location=classpath:/application.properties",
     "spring.ai.openai.api-key=unused-local-test-key",
     "spring.ai.model.embedding=none",
     "spring.ai.vectorstore.cassandra.table=vector_store",

@@ -40,13 +40,14 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(properties = {
+    "spring.config.location=classpath:/application.properties",
     "spring.ai.openai.api-key=unused-local-test-key",
     "spring.ai.model.embedding=none",
     "spring.ai.vectorstore.cassandra.table=vector_store",
     "spring.ai.chat.memory.repository.cassandra.initialize-schema=false"
 })
 @Import(BranchCompatibilityTest.LocalDatabase.class)
-class BranchCompatibilityTest extends CassandraIntegrationTest {
+class   BranchCompatibilityTest extends CassandraIntegrationTest {
     @Autowired CqlSession session;
     @Autowired CassandraChatMemoryRepository repository;
 
