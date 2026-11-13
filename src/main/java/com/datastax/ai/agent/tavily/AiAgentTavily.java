@@ -36,30 +36,32 @@ import org.springframework.web.client.RestTemplate;
 
 
 /**
- * You will need to
- * `export TAVILY_API_KEY=…`
+ * You will need to set
+ * `tavily.api-key=…` in application.properties
  *
  * Get a free API key at https://app.tavily.com/
  */
 public class AiAgentTavily extends AiAgentDelegator<Object> {
 
     private static final String TAVILY_URL = "https://api.tavily.com/search";
-    private static final String TAVILY_API_KEY = System.getenv("TAVILY_API_KEY");
     private static final int MAX_SEARCH_WORDS = 2000;
     private static final int SEARCH_RESULTS = 3;
 
-    private static void assertTavilyApiKeySet() {
-        if (null == TAVILY_API_KEY) {
-            throw new IllegalStateException("Please set the environment variable TAVILY_API_KEY");
+    private final String tavilyApiKey;
+
+    private void assertTavilyApiKeySet() {
+        if (null == tavilyApiKey || tavilyApiKey.isBlank()) {
+            throw new IllegalStateException("Please set the property tavily.api-key in application.properties");
         }
     }
 
-    public static AiAgentTavily create(AiAgent agent) {
-        return new AiAgentTavily(agent);
+    public static AiAgentTavily create(AiAgent agent, String tavilyApiKey) {
+        return new AiAgentTavily(agent, tavilyApiKey);
     }
 
-    AiAgentTavily(AiAgent agent) {
+    AiAgentTavily(AiAgent agent, String tavilyApiKey) {
         super(agent);
+        this.tavilyApiKey = tavilyApiKey;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class AiAgentTavily extends AiAgentDelegator<Object> {
         promptProperties = new HashMap<>(promptProperties(promptProperties));
         if ( message.getText().length() >= 5 ) {
             JSONObject post = new JSONObject();
-            post.put("api_key", TAVILY_API_KEY);
+            post.put("api_key", tavilyApiKey);
             post.put("query", message.getText()); // maybe the conversation is needed context
             post.put("include_answer", true);
             post.put("max_results", SEARCH_RESULTS);

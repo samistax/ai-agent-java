@@ -36,6 +36,7 @@ frontend/generated
 
 # local credentials (copy of credentials.txt.sample - never committed)
 credentials.txt
+config/
 
 ### macOS ###
 .DS_Store

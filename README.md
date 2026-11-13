@@ -13,7 +13,7 @@
 - Spring REST Clients
 
 
-This step introduces the decorating AI Agent `AiAgentTavily`.  With the use of the `TAVILY_API_KEY` env var is uses the api.tavily.com service to fetch online search results.
+This step introduces the decorating AI Agent `AiAgentTavily`.  With the use of the `tavily.api-key` property in `application.properties` it uses the api.tavily.com service to fetch online search results.
 
 This further enriches the prompt and the LLM's response, especially when information retrieved is recently published and unique.  It also allows the LLM's response to include reference links to sources and suggested further readings.
 
