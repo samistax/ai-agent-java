@@ -56,7 +56,7 @@ public class AiAgentFccBroadbandDataTool extends AiAgentDelegator<OpenAiChatOpti
 
     @Override
     public OpenAiChatOptions.Builder chatOptionsBuilder(OpenAiChatOptions.Builder chatOptionsBuilder) {
-        return chatOptionsBuilder.toolNames("fccBroadbandDataService");
+        return chatOptionsBuilder.toolNames("fccBroadbandDataService", "fccSimilarDaysService");
     }
 
 }

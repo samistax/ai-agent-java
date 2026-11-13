@@ -74,12 +74,13 @@ public class AiApplication implements AppShellConfigurator {
             CqlSession cqlSession,
             CassandraVectorStore store,
             EmbeddingModel embeddingModel,
-            @Value("${spring.ai.vectorstore.cassandra.initialize-schema:false}") boolean initializeSchema) {
+            @Value("${spring.ai.vectorstore.cassandra.initialize-schema:false}") boolean initializeSchema,
+            @Value("${tavily.api-key:}") String tavilyApiKey) {
 
         AiAgentSession session = AiAgentSession.create(baseAgent, chatHistoryRepository);
         AiAgentReranker reranker = AiAgentReranker.create(session, embeddingModel);
         AiAgentVector vector = AiAgentVector.create(reranker, store);
-        AiAgentTavily tavily = AiAgentTavily.create(vector);
+        AiAgentTavily tavily = AiAgentTavily.create(vector, tavilyApiKey);
         AiAgentFccBroadbandDataTool fcc = AiAgentFccBroadbandDataTool.create(tavily);
         return AiAgentSessionVector.create(fcc, cqlSession, embeddingModel, initializeSchema);
     }

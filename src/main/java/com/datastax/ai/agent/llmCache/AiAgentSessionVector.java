@@ -42,6 +42,7 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.cassandra.CassandraVectorStore;
 
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 public class AiAgentSessionVector extends AiAgentDelegator {
 
@@ -92,7 +93,7 @@ public class AiAgentSessionVector extends AiAgentDelegator {
             for (Document cacheHit : store.similaritySearch(request)) {
                 String cachedAnswer = (String) cacheHit.getMetadata().get("assistant");
                 if (null != cachedAnswer && !cachedAnswer.isBlank()) {
-                    logger.warn("CACHE HIT id {} question {}", cacheHit.getId(), userMsg.getText());
+                    logger.warn("CACHE HIT ({}) id {} question {}",cacheHit.getScore(), cacheHit.getId(), userMsg.getText());
                     return Flux.just(new ChatResponse(List.of(new Generation(new AssistantMessage(cachedAnswer)))));
                 }
             }
@@ -110,7 +111,10 @@ public class AiAgentSessionVector extends AiAgentDelegator {
                         prompt.getContents(),
                         null != answer ? Map.of("assistant", answer) : Map.of());
 
-                store.add(List.of(promptDoc));
+                // this callback runs on a reactor event-loop thread, where blocking is forbidden,
+                //  and store.add() blocks on the embedding HTTP call and the CQL write
+                Schedulers.boundedElastic().schedule(() -> store.add(List.of(promptDoc)));
+
             });
         }
         return agent.send(prompt);
